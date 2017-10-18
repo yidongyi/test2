@@ -40,7 +40,53 @@ def import_data_format_iris(file):
             data.append(current_dummy)
     print ("加载数据完毕")
     return data , cluster_location
+def import_data_format_wine(file):
+    data = []
+    cluster_location =[]
+    with open(str(file), 'r') as f:
+        for line in f:
+            current = line.strip().split(",")
+            current_dummy = []
+            for j in range(1, len(current)):
+                current_dummy.append(float(current[j]))
+            j= 0
+            if  current[j] == 1:
+                cluster_location.append(0)
+            elif current[j] == 2:
+                cluster_location.append(1)
+            else:
+                cluster_location.append(2)
+            data.append(current_dummy)
+    print ("加载数据完毕")
+    return data , cluster_location
 
+def import_data_format_abalone(file):
+    data = []
+    cluster_location =[]
+    with open(str(file), 'r') as f:
+        for line in f:
+            current = line.strip().split(",")
+            current_dummy = []
+            for j in range(1, len(current)):
+                current_dummy.append(float(current[j]))
+            j= 0
+            if  current[j] == 'I':
+                cluster_location.append(0)
+            elif current[j] == 'M':
+                cluster_location.append(1)
+            else:
+                cluster_location.append(2)
+            data.append(current_dummy)
+    print ("加载数据完毕")
+    return data , cluster_location
+
+def import_data_format_realdataxls(file):
+
+    cluster_location=[]
+    import pandas as pd
+    data=pd.read_excel(file)
+    #print ("加载数据完毕",data.as_matrix())
+    return data.as_matrix(),cluster_location
 def randomise_data(data):
     """
     该功能将数据随机化，并保持随机化顺序的记录
@@ -174,44 +220,58 @@ def fuzzy(data, cluster_number, m,w):
         if end_conditon(U, U_old):
             print ("结束聚类_number",len(C))
             #计算有效性评价指数
-            print('计算有效性评价指数V:',get_V(U,C,data,m))
+            print('计算有效性评价指数V:',get_Vnew(U,C,data,m))
             break
     #print ("标准化 U")
     U = normalise_U(U)
     #print(U)
     return U
-def get_V(U,C,data,m):
+def get_Vxb(U,C,data,m):
+    J=0;
+    c=len(C)
+    for i in range(0,len(data)):
+        J+=distance_u(data[i],C,U[i],m)
+
+    minnumber=(distance(C[0],C[1]))**2
+    for i in range(1,c):
+        for k in range(i+1,c):
+            temp=(distance(C[i],C[k]))**2
+            if minnumber<temp:
+                minnumber=temp
+    return J/len(data)/minnumber
+def get_Vnew(U,C,data,m):
     #类内的紧凑性指标(J)
     J=0;
     c=len(C)
     for i in range(0,len(data)):
         J+=distance_u(data[i],C,U[i],m)
-    #print('J------',J)
+    print('J--------->',J)
     #计算各聚类中心点之间的相对距离
     sep=0;
-    for i in range(0,c):
+    for i in range(0,c-1):
         for k in range(i+1,c):
             sep+=distance(C[i],C[k])
     sep=sep/(c*(c-1)/2)
+    print('sep---------->',sep)
 
     #隶属比E
     a=0.0;
     b=0.0;
 
     for i in range(0,len(U)):
-       b+= min(U[i])
+       b+=min(U[i])
        a+=max(U[i])
     E=a/b;
-
+    print('E--------------->',E)
     #计算V
-    V=sep*E/(c*J)
+    V=(sep*E)/(c*J)
     return V;
 def distance_u(point,center,u,m):
     if len(point) != len(center[0]):
-        return -1
+        print('data error')
     dummy = 0.0
     for i in range(0, len(center)):
-        dummy += (distance(point,center[i]))**2*u[i]**m
+        dummy += ((distance(point,center[i]))**2*(u[i]**m))
     return dummy
 
 def checker_iris(final_location):
@@ -233,7 +293,7 @@ def checker_iris(final_location):
 if __name__ == '__main__':
 
     # 加载数据
-    data, cluster_location = import_data_format_iris("iris.txt")
+    data,cluster_location= import_data_format_realdataxls("realdata.xlsx")
     #print(cluster_location)
     #print("------加载数据-----"*3)
     #print_matrix(data)
@@ -258,9 +318,9 @@ if __name__ == '__main__':
         w.append(A1[i]/sum(A1))
     #w=[0.215,0.521,0.164,0.1]
     print('w----------',w)
-    for i in range(2,15):
-       final_location = fuzzy(data , i , 2,w)
-
+    #for i in range(2,10):
+    final_location = fuzzy(data , 10 , 2,w)
+    print(mat(final_location).sum(axis=0))
     # 还原数据
     #final_location = de_randomise_data(final_location, order)
     #print("还原数据")
