@@ -10,9 +10,8 @@ import pandas as pd;
 # plt.ylim(0,13)
 # plt.plot(x ,y,'*')
 # plt.show()
-a = [1,2,3,4,5]
-data = [];
-data.append([1,2])
-data.append(a)
-print(data)
+a = np.mat([1,2,3,4,5])
 
+print(a)
+b = np.where(a==5)
+print(b[1])

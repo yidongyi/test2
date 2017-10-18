@@ -1,3 +1,4 @@
+#-*- coding:utf-8-*
 import copy
 import math
 import random
@@ -6,8 +7,9 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import decimal
-
-
+import numpy as np
+import plot_end;
+from numpy import mat
 # 用于初始化隶属度矩阵U
 global MAX
 MAX = 10000.0
@@ -93,7 +95,7 @@ def distance(point, center):
         return -1
     dummy = 0.0
     for i in range(0, len(point)):
-        dummy += abs(point[i] - center[i]) ** 2
+        dummy += (abs(point[i] - center[i]) ** 2)
     return math.sqrt(dummy)
 
 def end_conditon(U, U_old):
@@ -121,15 +123,16 @@ def normalise_U(U):
     return U
 
 # m的最佳取值范围为[1.5，2.5]
-def fuzzy(data, cluster_number, m):
+def fuzzy(data, cluster_number, m,w):
     """
     这是主函数，它将计算所需的聚类中心，并返回最终的归一化隶属矩阵U.
     参数是：簇数(cluster_number)和隶属度的因子(m)
+    w 是属性权重
     """
     # 初始化隶属度矩阵U
     U = initialise_U(data, cluster_number)
-    print("-----初始化隶属度矩阵U------")
-    print_matrix(U)
+    #print("-----初始化隶属度矩阵U------")
+    #print_matrix(U)
     # 循环更新U
     while (True):
         # 创建它的副本，以检查结束条件
@@ -143,9 +146,9 @@ def fuzzy(data, cluster_number, m):
                 dummy_sum_dum = 0.0
                 for k in range(0, len(data)):
                     # 分子
-                    dummy_sum_num += (U[k][j] ** m) * data[k][i]
+                    dummy_sum_num += (U[k][j] ** m) * data[k][i]*w[i]
                     # 分母
-                    dummy_sum_dum += (U[k][j] ** m)
+                    dummy_sum_dum += (U[k][j] ** m)*w[i]
                 # 第i列的聚类中心
                 current_cluster_center.append(dummy_sum_num/dummy_sum_dum)
             # 第j簇的所有聚类中心
@@ -169,12 +172,47 @@ def fuzzy(data, cluster_number, m):
                 U[i][j] = 1 / dummy
 
         if end_conditon(U, U_old):
-            print ("结束聚类")
+            print ("结束聚类_number",len(C))
+            #计算有效性评价指数
+            print('计算有效性评价指数V:',get_V(U,C,data,m))
             break
-    print ("标准化 U")
+    #print ("标准化 U")
     U = normalise_U(U)
-    print(U)
+    #print(U)
     return U
+def get_V(U,C,data,m):
+    #类内的紧凑性指标(J)
+    J=0;
+    c=len(C)
+    for i in range(0,len(data)):
+        J+=distance_u(data[i],C,U[i],m)
+    #print('J------',J)
+    #计算各聚类中心点之间的相对距离
+    sep=0;
+    for i in range(0,c):
+        for k in range(i+1,c):
+            sep+=distance(C[i],C[k])
+    sep=sep/(c*(c-1)/2)
+
+    #隶属比E
+    a=0.0;
+    b=0.0;
+
+    for i in range(0,len(U)):
+       b+= min(U[i])
+       a+=max(U[i])
+    E=a/b;
+
+    #计算V
+    V=sep*E/(c*J)
+    return V;
+def distance_u(point,center,u,m):
+    if len(point) != len(center[0]):
+        return -1
+    dummy = 0.0
+    for i in range(0, len(center)):
+        dummy += (distance(point,center[i]))**2*u[i]**m
+    return dummy
 
 def checker_iris(final_location):
     """
@@ -201,7 +239,7 @@ if __name__ == '__main__':
     #print_matrix(data)
 
     # 随机化数据
-    data,order = randomise_data(data)
+    #data,order = randomise_data(data)
 
     #print("------随机化数据-----"*3)
     #print_matrix(data)
@@ -210,13 +248,25 @@ if __name__ == '__main__':
     # 现在我们有一个名为data的列表，它只是数字
     # 我们还有另一个名为cluster_location的列表，它给出了正确的聚类结果位置
     # 调用模糊C均值函数
-    final_location = fuzzy(data , 3 , 2)
+    #相关系数矩阵
+    R = np.corrcoef(data,rowvar=0)
+    #特征向量
+    A1 = np.linalg.eigvals(R)
+    #print("A1",A1)
+    w=[]
+    for i in range(A1.size):
+        w.append(A1[i]/sum(A1))
+    #w=[0.215,0.521,0.164,0.1]
+    print('w----------',w)
+    for i in range(2,15):
+       final_location = fuzzy(data , i , 2,w)
 
     # 还原数据
-    final_location = de_randomise_data(final_location, order)
-    print("还原数据")
-    print_matrix(final_location)
+    #final_location = de_randomise_data(final_location, order)
+    #print("还原数据")
+    #print_matrix(final_location)
 
     # 准确度分析
-    print (checker_iris(final_location))
+    #print (checker_iris(final_location))
+    #plot_end.plotend(mat(final_location))
     print ("用时：{0}".format(time.time() - start))
