@@ -319,7 +319,7 @@ if __name__ == '__main__':
     #w=[0.215,0.521,0.164,0.1]
     print('w----------',w)
     #for i in range(2,10):
-    final_location = fuzzy(data , 10 , 2,w)
+    final_location = fuzzy(data , 15 , 2,w)
     print(mat(final_location).sum(axis=0))
     # 还原数据
     #final_location = de_randomise_data(final_location, order)
