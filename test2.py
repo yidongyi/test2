@@ -21,7 +21,13 @@ import pandas as pd;
 # print(min(c[0]))
 # print(max(c[1]))
 
-import pandas as pd
+
 data=pd.read_excel('test.xlsx')
 
-print (data.as_matrix())
+print (data.as_matrix().max(0))
+print (data.as_matrix().min(0))
+minmat=np.full((3,7),data.as_matrix().min(0))
+data=(data-minmat)/(data.as_matrix().max(0)-data.as_matrix().min(0))
+print(data)
+print(data.as_matrix().std(0))
+print(data.as_matrix().mean(0))

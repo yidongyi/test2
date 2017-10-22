@@ -87,32 +87,8 @@ def import_data_format_realdataxls(file):
     data=pd.read_excel(file)
     #print ("加载数据完毕",data.as_matrix())
     return data.as_matrix(),cluster_location
-def randomise_data(data):
-    """
-    该功能将数据随机化，并保持随机化顺序的记录
-    """
-    order = list(range(0, len(data)))
-    random.shuffle(order)#讲序列随机排序
-    new_data = [[] for i in range(0, len(data))]
-    for index in range(0, len(order)):
-        new_data[index] = data[order[index]]
-    return new_data, order
 
-def de_randomise_data(data, order):
-    """
-    此函数将返回数据的原始顺序，将randomise_data()返回的order列表作为参数
-    """
-    new_data = [[]for i in range(0, len(data))]
-    for index in range(len(order)):
-        new_data[order[index]] = data[index]
-    return new_data
 
-def print_matrix(list):
-    """
-    以可重复的方式打印矩阵
-    """
-    for i in range(0, len(list)):
-        print (list[i])
 
 def initialise_U(data, cluster_number):
     """
@@ -274,22 +250,6 @@ def distance_u(point,center,u,m):
         dummy += ((distance(point,center[i]))**2*(u[i]**m))
     return dummy
 
-def checker_iris(final_location):
-    """
-    和真实的聚类结果进行校验比对
-    """
-    right = 0.0
-    for k in range(0, 3):
-        checker =[0,0,0]
-        for i in range(0, 50):
-            for j in range(0, len(final_location[0])):
-                if final_location[i + (50*k)][j] == 1:
-                    checker[j] += 1
-        right += max(checker)
-        print (right)
-    answer =  right / 150 * 100
-    return "准确度：" + str(answer) +  "%"
-
 if __name__ == '__main__':
 
     # 加载数据
@@ -303,7 +263,7 @@ if __name__ == '__main__':
 
     #print("------随机化数据-----"*3)
     #print_matrix(data)
-
+    data=(data-data.mean())/data.std()
     start = time.time()
     # 现在我们有一个名为data的列表，它只是数字
     # 我们还有另一个名为cluster_location的列表，它给出了正确的聚类结果位置
@@ -321,12 +281,6 @@ if __name__ == '__main__':
     #for i in range(2,10):
     final_location = fuzzy(data , 15 , 2,w)
     print(mat(final_location).sum(axis=0))
-    # 还原数据
-    #final_location = de_randomise_data(final_location, order)
-    #print("还原数据")
-    #print_matrix(final_location)
 
-    # 准确度分析
-    #print (checker_iris(final_location))
-    #plot_end.plotend(mat(final_location))
+
     print ("用时：{0}".format(time.time() - start))
